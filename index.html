@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verbträning - Test 1 & Test 2</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Literata:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .verb-title {
+            font-family: 'Literata', serif;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.4s ease-out;
+        }
+        
+        .pulse-once {
+            animation: pulse 0.3s ease-out;
+        }
+        
+        .test-card {
+            transition: all 0.3s ease;
+        }
+        
+        .test-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+        }
+        
+        .input-field {
+            transition: all 0.2s ease;
+        }
+        
+        .input-field:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.15);
+        }
+        
+        .correct-answer {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-color: #10b981;
+        }
+        
+        .incorrect-answer {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Lucide Icons som SVG
+        const BookOpen = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+        );
+
+        const List = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        );
+
+        const CheckCircle = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const XCircle = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const RefreshCw = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+        );
+
+        const Send = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+        );
+
+        const Trophy = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+        );
+
+        const VERBS_TEST1 = [
+            {"infinitiv":"brinna","imperativ":"brinn!","presens":"brinner","preteritum":"brann","supinum":"brunnit"},
+            {"infinitiv":"brista","imperativ":"brist!","presens":"brister","preteritum":"brast","supinum":"brustit"},
+            {"infinitiv":"dricka","imperativ":"drick!","presens":"dricker","preteritum":"drack","supinum":"druckit"},
+            {"infinitiv":"finna","imperativ":"finn!","presens":"finner","preteritum":"fann","supinum":"funnit"},
+            {"infinitiv":"finnas","imperativ":null,"presens":"finns","preteritum":"fanns","supinum":"funnits"},
+            {"infinitiv":"försvinna","imperativ":"försvinn!","presens":"försvinner","preteritum":"försvann","supinum":"försvunnit"},
+            {"infinitiv":"hinna","imperativ":"hinn!","presens":"hinner","preteritum":"hann","supinum":"hunnit"},
+            {"infinitiv":"rinna","imperativ":"rinn!","presens":"rinner","preteritum":"rann","supinum":"runnit"},
+            {"infinitiv":"sitta","imperativ":"sitt!","presens":"sitter","preteritum":"satt","supinum":"suttit"},
+            {"infinitiv":"slippa","imperativ":"slipp!","presens":"slipper","preteritum":"slapp","supinum":"sluppit"},
+            {"infinitiv":"spinna","imperativ":"spinn!","presens":"spinner","preteritum":"spann","supinum":"spunnit"},
+            {"infinitiv":"spricka","imperativ":"sprick!","presens":"spricker","preteritum":"sprack","supinum":"spruckit"},
+            {"infinitiv":"springa","imperativ":"spring!","presens":"springer","preteritum":"sprang","supinum":"sprungit"},
+            {"infinitiv":"sticka","imperativ":"stick!","presens":"sticker","preteritum":"stack","supinum":"stuckit"},
+            {"infinitiv":"stinka","imperativ":"stink!","presens":"stinker","preteritum":"stank","supinum":"stunkit"},
+            {"infinitiv":"vinna","imperativ":"vinn!","presens":"vinner","preteritum":"vann","supinum":"vunnit"},
+            {"infinitiv":"bita","imperativ":"bit!","presens":"biter","preteritum":"bet","supinum":"bitit"},
+            {"infinitiv":"bli(va)","imperativ":"bli!","presens":"blir","preteritum":"blev","supinum":"blivit"},
+            {"infinitiv":"driva","imperativ":"driv!","presens":"driver","preteritum":"drev","supinum":"drivit"},
+            {"infinitiv":"glida","imperativ":"glid!","presens":"glider","preteritum":"gled","supinum":"glidit"},
+            {"infinitiv":"gnida","imperativ":"gnid!","presens":"gnider","preteritum":"gned","supinum":"gnidit"},
+            {"infinitiv":"gripa","imperativ":"grip!","presens":"griper","preteritum":"grep","supinum":"gripit"},
+            {"infinitiv":"kliva","imperativ":"kliv!","presens":"kliver","preteritum":"klev","supinum":"klivit"},
+            {"infinitiv":"knipa","imperativ":"knip!","presens":"kniper","preteritum":"knep","supinum":"knipit"}
+        ];
+
+        const VERBS_TEST2 = [
+            {"infinitiv":"hälla","imperativ":"håll!","presens":"håller","preteritum":"höll","supinum":"hållit"},
+            {"infinitiv":"kliva","imperativ":"kliv!","presens":"kliver","preteritum":"klev","supinum":"klivit"},
+            {"infinitiv":"knipa","imperativ":"knip!","presens":"kniper","preteritum":"knep","supinum":"knipit"},
+            {"infinitiv":"knyta","imperativ":"knyt!","presens":"knyter","preteritum":"knöt","supinum":"knutit"},
+            {"infinitiv":"komma","imperativ":"kom!","presens":"kommer","preteritum":"kom","supinum":"kommit"},
+            {"infinitiv":"krypa","imperativ":"kryp!","presens":"kryper","preteritum":"kröp","supinum":"krupit"},
+            {"infinitiv":"lida","imperativ":"lid!","presens":"lider","preteritum":"led","supinum":"lidit"},
+            {"infinitiv":"ljuga","imperativ":"ljug!","presens":"ljuger","preteritum":"ljög","supinum":"ljugit"},
+            {"infinitiv":"låta","imperativ":"låt!","presens":"låter","preteritum":"lät","supinum":"låtit"},
+            {"infinitiv":"njuta","imperativ":"njut!","presens":"njuter","preteritum":"njöt","supinum":"njutit"},
+            {"infinitiv":"pipa","imperativ":"pip!","presens":"piper","preteritum":"pep","supinum":"pipit"},
+            {"infinitiv":"rida","imperativ":"rid!","presens":"rider","preteritum":"red","supinum":"ridit"},
+            {"infinitiv":"rinna","imperativ":"rinn!","presens":"rinner","preteritum":"rann","supinum":"runnit"},
+            {"infinitiv":"riva","imperativ":"riv!","presens":"river","preteritum":"rev","supinum":"rivit"},
+            {"infinitiv":"ryta","imperativ":"ryt!","presens":"ryter","preteritum":"röt","supinum":"rutit"},
+            {"infinitiv":"sitta","imperativ":"sitt!","presens":"sitter","preteritum":"satt","supinum":"suttit"},
+            {"infinitiv":"sjuda","imperativ":"sjud!","presens":"sjuder","preteritum":"sjöd","supinum":"sjudit"},
+            {"infinitiv":"sjunga","imperativ":"sjung!","presens":"sjunger","preteritum":"sjöng","supinum":"sjungit"},
+            {"infinitiv":"sjunka","imperativ":"sjunk!","presens":"sjunker","preteritum":"sjönk","supinum":"sjunkit"},
+            {"infinitiv":"skina","imperativ":null,"presens":"skiner","preteritum":"sken","supinum":"skinit"},
+            {"infinitiv":"skjuta","imperativ":"skjut!","presens":"skjuter","preteritum":"sköt","supinum":"skjutit"},
+            {"infinitiv":"skrika","imperativ":"skrik!","presens":"skriker","preteritum":"skrek","supinum":"skrikit"},
+            {"infinitiv":"skriva","imperativ":"skriv!","presens":"skriver","preteritum":"skrev","supinum":"skrivit"},
+            {"infinitiv":"skryta","imperativ":"skryt!","presens":"skryter","preteritum":"skröt","supinum":"skrutit"}
+        ];
+
+        const FORM_LABELS = {
+            infinitiv: 'Infinitiv',
+            imperativ: 'Imperativ',
+            presens: 'Presens',
+            preteritum: 'Preteritum',
+            supinum: 'Supinum'
+        };
+
+        function VerbTrainer() {
+            const [selectedTest, setSelectedTest] = useState(null);
+            const [currentVerb, setCurrentVerb] = useState(null);
+            const [shownForm, setShownForm] = useState(null);
+            const [answers, setAnswers] = useState({});
+            const [results, setResults] = useState(null);
+            const [sessionStats, setSessionStats] = useState({ correct: 0, total: 0, perfectVerbs: 0 });
+            const [showEmailForm, setShowEmailForm] = useState(false);
+            const [emailData, setEmailData] = useState({ 
+                studentEmail: '', 
+                teacherEmail: 'hakan.hildingsson@edu.huddinge.se'
+            });
+
+            const getCurrentVerbList = () => {
+                return selectedTest === 1 ? VERBS_TEST1 : VERBS_TEST2;
+            };
+
+            const getRandomVerb = () => {
+                const verbs = getCurrentVerbList();
+                const verb = verbs[Math.floor(Math.random() * verbs.length)];
+                const availableForms = Object.keys(FORM_LABELS).filter(form => verb[form] !== null);
+                const randomForm = availableForms[Math.floor(Math.random() * availableForms.length)];
+                
+                setCurrentVerb(verb);
+                setShownForm(randomForm);
+                setAnswers({});
+                setResults(null);
+            };
+
+            const handleTestSelect = (testNumber) => {
+                setSelectedTest(testNumber);
+                setSessionStats({ correct: 0, total: 0, perfectVerbs: 0 });
+            };
+
+            useEffect(() => {
+                if (selectedTest) {
+                    getRandomVerb();
+                }
+            }, [selectedTest]);
+
+            const normalizeAnswer = (str) => {
+                return str.toLowerCase().trim().replace(/\s+/g, ' ').replace(/!/g, '');
+            };
+
+            const checkAnswers = () => {
+                if (!currentVerb) return;
+
+                const formResults = {};
+                let correctCount = 0;
+                let totalForms = 0;
+
+                Object.keys(FORM_LABELS).forEach(form => {
+                    if (form !== shownForm && currentVerb[form] !== null) {
+                        totalForms++;
+                        const userAnswer = normalizeAnswer(answers[form] || '');
+                        const correctAnswer = normalizeAnswer(currentVerb[form]);
+                        const isCorrect = userAnswer === correctAnswer;
+                        
+                        formResults[form] = {
+                            correct: isCorrect,
+                            userAnswer: answers[form] || '',
+                            correctAnswer: currentVerb[form]
+                        };
+                        
+                        if (isCorrect) correctCount++;
+                    }
+                });
+
+                const isPerfect = correctCount === totalForms;
+                
+                setResults(formResults);
+                setSessionStats(prev => ({
+                    correct: prev.correct + correctCount,
+                    total: prev.total + totalForms,
+                    perfectVerbs: prev.perfectVerbs + (isPerfect ? 1 : 0)
+                }));
+            };
+
+            const sendResults = () => {
+                const percentage = sessionStats.total > 0 ? ((sessionStats.correct / sessionStats.total) * 100).toFixed(1) : 0;
+                
+                const resultsText = `
+Träningsresultat för ${emailData.studentEmail}
+Test: ${selectedTest === 1 ? 'Test 1' : 'Test 2'}
+
+Session sammanfattning:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Korrekta former: ${sessionStats.correct}/${sessionStats.total} (${percentage}%)
+✅ Perfekta verb: ${sessionStats.perfectVerbs}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Senaste verb: ${currentVerb.infinitiv}
+${Object.entries(results || {}).map(([form, data]) => 
+    `  ${FORM_LABELS[form]}: ${data.userAnswer || '(ej ifyllt)'} ${data.correct ? '✓' : `✗ (rätt: ${data.correctAnswer})`}`
+).join('\n')}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Datum: ${new Date().toLocaleString('sv-SE')}
+                `.trim();
+
+                alert(`📧 Resultat klara!
+
+TILL: ${emailData.studentEmail}
+KOPIA: ${emailData.teacherEmail}
+
+${resultsText}`);
+                
+                setShowEmailForm(false);
+            };
+
+            if (!selectedTest) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 flex items-center justify-center">
+                        <div className="max-w-4xl w-full slide-in">
+                            <div className="text-center mb-12">
+                                <div className="inline-flex items-center gap-3 mb-4">
+                                    <BookOpen className="w-12 h-12 text-indigo-600" />
+                                    <h1 className="verb-title text-6xl font-bold text-gray-800">Verbträning</h1>
+                                </div>
+                                <p className="text-gray-600 text-xl">Välj vilket test du vill träna på</p>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div 
+                                    onClick={() => handleTestSelect(1)}
+                                    className="test-card bg-white/90 backdrop-blur rounded-3xl shadow-xl p-8 border-2 border-indigo-200 cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
+                                            <span className="text-white font-bold text-xl">1</span>
+                                        </div>
+                                        <h2 className="verb-title text-3xl font-bold text-gray-800">Test 1</h2>
+                                    </div>
+                                    <p className="text-gray-600 mb-6">24 starka verb från första listan</p>
+                                    <div className="space-y-2 text-sm text-gray-500">
+                                        <p>• brinna, brista, dricka, finna...</p>
+                                        <p>• bita, bli(va), driva, glida...</p>
+                                    </div>
+                                    <button className="mt-6 w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg">
+                                        Välj Test 1
+                                    </button>
+                                </div>
+
+                                <div 
+                                    onClick={() => handleTestSelect(2)}
+                                    className="test-card bg-white/90 backdrop-blur rounded-3xl shadow-xl p-8 border-2 border-purple-200 cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                                            <span className="text-white font-bold text-xl">2</span>
+                                        </div>
+                                        <h2 className="verb-title text-3xl font-bold text-gray-800">Test 2</h2>
+                                    </div>
+                                    <p className="text-gray-600 mb-6">24 starka verb från andra listan</p>
+                                    <div className="space-y-2 text-sm text-gray-500">
+                                        <p>• hälla, kliva, knipa, knyta...</p>
+                                        <p>• sjunga, sjunka, skriva, skryta...</p>
+                                    </div>
+                                    <button className="mt-6 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg">
+                                        Välj Test 2
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (!currentVerb) return <div className="flex items-center justify-center h-screen">Laddar...</div>;
+
+            const testGradient = selectedTest === 1 ? 'from-indigo-600 to-purple-600' : 'from-purple-600 to-pink-600';
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+                    <div className="max-w-3xl mx-auto">
+                        <div className="text-center mb-8 slide-in">
+                            <div className="flex items-center justify-between mb-4">
+                                <button
+                                    onClick={() => {
+                                        setSelectedTest(null);
+                                        setSessionStats({ correct: 0, total: 0, perfectVerbs: 0 });
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white/80 rounded-xl shadow hover:bg-white transition-all"
+                                >
+                                    <List className="w-5 h-5" />
+                                    <span>Byt test</span>
+                                </button>
+                                <div className={`px-4 py-2 bg-gradient-to-r ${testGradient} text-white rounded-full font-semibold`}>
+                                    Test {selectedTest}
+                                </div>
+                                <div className="w-24"></div>
+                            </div>
+                            <div className="inline-flex items-center gap-3 mb-4">
+                                <BookOpen className="w-10 h-10 text-indigo-600" />
+                                <h1 className="verb-title text-5xl font-bold text-gray-800">Verbträning</h1>
+                            </div>
+                            <p className="text-gray-600 text-lg">Öva på svenska starka verb</p>
+                        </div>
+
+                        <div className="bg-white/80 backdrop-blur rounded-2xl shadow-lg p-6 mb-6 border border-indigo-100">
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <div className="text-3xl font-bold text-indigo-600">{sessionStats.correct}</div>
+                                    <div className="text-sm text-gray-600">Korrekta former</div>
+                                </div>
+                                <div>
+                                    <div className="text-3xl font-bold text-purple-600">{sessionStats.total}</div>
+                                    <div className="text-sm text-gray-600">Totalt antal former</div>
+                                </div>
+                                <div>
+                                    <div className="text-3xl font-bold text-green-600">{sessionStats.perfectVerbs}</div>
+                                    <div className="text-sm text-gray-600">Perfekta verb</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border-2 border-indigo-200">
+                            <div className="text-center mb-8">
+                                <div className={`inline-block bg-gradient-to-r ${testGradient} text-white px-6 py-3 rounded-full mb-4 shadow-lg`}>
+                                    <span className="text-sm font-semibold tracking-wide">{FORM_LABELS[shownForm]}</span>
+                                </div>
+                                <div className="verb-title text-6xl font-bold text-gray-800 mb-2">
+                                    {currentVerb[shownForm]}
+                                </div>
+                                <p className="text-gray-500">Skriv de andra formerna av detta verb</p>
+                            </div>
+
+                            <div className="space-y-4 mb-6">
+                                {Object.keys(FORM_LABELS).map(form => {
+                                    if (form === shownForm || currentVerb[form] === null) return null;
+                                    
+                                    const result = results?.[form];
+                                    const inputClass = result ? (result.correct ? 'correct-answer' : 'incorrect-answer') : '';
+
+                                    return (
+                                        <div key={form} className="slide-in">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                {FORM_LABELS[form]}
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    value={answers[form] || ''}
+                                                    onChange={(e) => setAnswers(prev => ({ ...prev, [form]: e.target.value }))}
+                                                    disabled={results !== null}
+                                                    className={`input-field w-full px-4 py-3 border-2 rounded-xl text-lg
+                                                        ${inputClass || 'border-gray-200 focus:border-indigo-400'}
+                                                        focus:outline-none disabled:bg-gray-50`}
+                                                    placeholder="Skriv svaret här..."
+                                                />
+                                                {result && (
+                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                        {result.correct ? (
+                                                            <CheckCircle className="w-6 h-6 text-green-600" />
+                                                        ) : (
+                                                            <XCircle className="w-6 h-6 text-red-600" />
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {result && !result.correct && (
+                                                <p className="text-sm text-red-600 mt-1">
+                                                    Rätt svar: <span className="font-semibold">{result.correctAnswer}</span>
+                                                </p>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="flex gap-3">
+                                {!results ? (
+                                    <button
+                                        onClick={checkAnswers}
+                                        className={`flex-1 bg-gradient-to-r ${testGradient} text-white px-6 py-4 rounded-xl font-semibold text-lg
+                                            hover:opacity-90 transform hover:scale-105 transition-all shadow-lg flex items-center justify-center gap-2`}
+                                    >
+                                        <CheckCircle className="w-5 h-5" />
+                                        Rätta
+                                    </button>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={getRandomVerb}
+                                            className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-4 rounded-xl font-semibold text-lg
+                                                hover:from-green-700 hover:to-emerald-700 transform hover:scale-105 transition-all shadow-lg flex items-center justify-center gap-2"
+                                        >
+                                            <RefreshCw className="w-5 h-5" />
+                                            Nästa verb
+                                        </button>
+                                        <button
+                                            onClick={() => setShowEmailForm(true)}
+                                            className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-4 rounded-xl font-semibold text-lg
+                                                hover:from-blue-700 hover:to-cyan-700 transform hover:scale-105 transition-all shadow-lg flex items-center justify-center gap-2"
+                                        >
+                                            <Send className="w-5 h-5" />
+                                            Skicka resultat
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+
+                            {results && (
+                                <div className="mt-6 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border-2 border-indigo-200 pulse-once">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Trophy className="w-6 h-6 text-indigo-600" />
+                                        <h3 className="font-bold text-lg text-gray-800">Resultat</h3>
+                                    </div>
+                                    <p className="text-gray-700">
+                                        Du fick <span className="font-bold text-indigo-600">
+                                            {Object.values(results).filter(r => r.correct).length}
+                                        </span> av <span className="font-bold text-purple-600">
+                                            {Object.values(results).length}
+                                        </span> former rätt!
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {showEmailForm && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6 z-50">
+                            <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full slide-in">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-2">Skicka resultat</h2>
+                                <p className="text-sm text-gray-600 mb-6">
+                                    Resultaten skickas automatiskt till din lärare 
+                                    <span className="font-semibold text-indigo-600"> (hakan.hildingsson@edu.huddinge.se)</span>
+                                </p>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Din skolmailadress *
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={emailData.studentEmail}
+                                            onChange={(e) => setEmailData(prev => ({ ...prev, studentEmail: e.target.value }))}
+                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-400 focus:outline-none"
+                                            placeholder="ditt.namn@edu.huddinge.se"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1.5">
+                                            ⚠️ Använd din skolmail, inte privat e-post
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 mt-6">
+                                    <button
+                                        onClick={() => setShowEmailForm(false)}
+                                        className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all"
+                                    >
+                                        Avbryt
+                                    </button>
+                                    <button
+                                        onClick={sendResults}
+                                        disabled={!emailData.studentEmail}
+                                        className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold
+                                            hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Skicka
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<VerbTrainer />);
+    </script>
+</body>
+</html>
